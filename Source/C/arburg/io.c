@@ -3,15 +3,12 @@
 #include <stdint.h>
 #include <string.h>
 #include <unistd.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <errno.h>
 
 #include "model.h"
-
-
-enum _file_type_t
-{
-    SIGNAL = 0,
-    RESULT
-} file_type_t;
+#include "io_type.h"
 
 
 void model_write(
@@ -63,4 +60,39 @@ void model_write_csv(
 
     fflush(fp);
     fclose(fp);
+}
+
+
+/**
+ * 最新のデータディレクトリのシンボリックリンクを作成もしくは更新する.
+ */
+int create_or_update_data_link(
+        const char *src,
+        const char *dst)
+{
+    int ret = EOF;
+
+    // 既にシンボリックリンクが存在する場合は削除する.
+    if(access(dst, F_OK))
+    {
+        struct stat statbuf;
+        memset(&statbuf, 0, sizeof(struct stat));
+
+        ret = stat(dst, &statbuf);
+
+        if(ret == 0 && ! S_ISLNK(statbuf.st_mode))
+        {
+            // 使用想定している宛先がシンボリックリンク以外としてすでに存在している
+            return -2;
+        }
+
+        // シンボリックリンクの削除
+        unlink(dst);
+    }
+
+    fprintf(stderr, "%s -> %s\n", src, dst);
+
+    ret = symlink(src, dst);
+
+    return (ret == 0) ? 0 : errno;
 }

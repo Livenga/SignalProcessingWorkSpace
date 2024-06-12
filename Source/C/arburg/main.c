@@ -6,15 +6,9 @@
 #include <sys/stat.h>
 #include <errno.h>
 
+#include "io.h"
 #include "model.h"
 
-extern void model_write(
-        const char *path,
-        const model_t *p_model);
-
-extern void model_write_csv(
-        const char *path,
-        const model_t *p_model);
 
 /**
  */
@@ -37,6 +31,7 @@ static char *path_combine(
         char *p2);
 
 static int q_compare(const void *p1, const void *p2);
+static char *get_target_name(const char *path);
 
 /**
  */
@@ -55,7 +50,7 @@ int main(
     // 出力先ディレクトリ作成
     create_datetime_directory(path, 1024);
     char *signal_path = path_combine(path, "signal.csv");
-    //model_write_csv(signal_path, p_model);
+    model_write_csv(signal_path, p_model);
 
     free(signal_path);
 
@@ -98,6 +93,11 @@ int main(
     {
         calc_power_spectrum(p_result + i, 200.f, path);
     }
+
+    char *p_target_name = get_target_name(path);
+    create_or_update_data_link(p_target_name, "csvs/latest");
+
+    free(p_target_name); p_target_name = NULL;
 
 
 #if 0
@@ -226,7 +226,12 @@ static char *path_combine(
 }
 
 
-static int q_compare(const void *p1, const void *p2)
+/**
+ * qsort 順序判定関数
+ */
+static int q_compare(
+        const void *p1,
+        const void *p2)
 {
     if(p1 == NULL || p2 == NULL)
         return -1;
@@ -235,4 +240,40 @@ static int q_compare(const void *p1, const void *p2)
                     *_p2 = (const arburg_result_t *)p2;
 
     return _p1->Q > _p2->Q;
+}
+
+
+/**
+ */
+static char *get_target_name(const char *path)
+{
+    size_t len = strlen(path);
+    char *tmp = (char *)calloc(len + 1, sizeof(char));
+    memcpy(tmp, path, len * sizeof(char));
+
+    // XXX 末尾に '/' が複数連続した場合が考慮されていない.
+    if('/' == *(tmp + (len - 1)))
+        *(tmp + (len - 1)) = '\0';
+
+    char *p_split = strchr(tmp, '/');
+    if(p_split == NULL)
+        return tmp;
+
+    char *p_prev = p_split;
+    do
+    {
+        p_split = strchr(p_prev + 1, '/');
+        if(p_split != NULL)
+            p_prev = p_split;
+    }
+    while(p_split != NULL);
+
+    ++p_prev;
+    len = strlen(p_prev);
+    char *p_ret = (char *)calloc(len + 1, sizeof(char));
+    memcpy(p_ret, p_prev, len);
+
+    free(tmp); tmp = NULL;
+
+    return p_ret;
 }
