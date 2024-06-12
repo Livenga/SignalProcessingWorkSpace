@@ -48,6 +48,7 @@ partial class ARBurgResult
 
         var bx  = new double[N];
         var bdx = new double[N];
+
         var pm  = new double[orderCount];
 
         var a = new double[orderCount];
@@ -59,8 +60,8 @@ partial class ARBurgResult
         {
             double adjX = x[i] - aveX;
 
-            //bx[i] = adjX;
-            bx[i] = x[i];
+            bx[i] = adjX;
+            //bx[i] = x[i];
             sumX += adjX * adjX;
         }
         pm[0] = sumX / (double)N;
@@ -68,11 +69,12 @@ partial class ARBurgResult
         Debug.WriteLine($"[Debug] X 分散: {pm[0]}");
 #endif
 
+        a[0]     = 1f;
+
         Array.Copy(
                 sourceArray:      bx,  sourceIndex:      1,
                 destinationArray: bdx, destinationIndex: 0,
                 length: N - 1);
-
 
         for(var m = 1; m < orderCount; ++m)
         {
@@ -87,7 +89,7 @@ partial class ARBurgResult
                 nume += bmi * bdmi;
                 deno += (bmi * bmi) + (bdmi * bdmi);
             }
-            double amm = -(2f * nume) / deno;
+            double amm = (-2f * nume) / deno;
 
             a[m]  = amm;
             pm[m] = pm[m - 1] * (1f - (amm * amm) );
@@ -97,14 +99,14 @@ partial class ARBurgResult
                 // 自己回帰モデル次数の更新
                 for(var i = 1; i < m; ++i)
                 {
-                    a[i] = prevA[i] * amm * prevA[m - i];
+                    a[i] = prevA[i] + amm * prevA[m - i];
                 }
             }
 
             Array.Copy(
                     sourceArray:      a,     sourceIndex:      0,
                     destinationArray: prevA, destinationIndex: 0,
-                    length:           m);
+                    length:           m + 1);
 
             double Em2 = .0f;
             for(var k = m + 1; k < N; ++k)
@@ -118,18 +120,18 @@ partial class ARBurgResult
                 Em2 += Math.Pow(x[k] - sumAx, 2f);
             }
 
-            var q = Em2 * ( (1f + (((double)m + 1f) / N) )  / (1f - (((double)m + 1f) / N)) );
-            var cursorAm = new double[m];
+            var q = Em2 * ((double)(N + m + 1f) / (double)(N - (m + 1f)));
+            var cursorAm = new double[m + 1];
             Array.Copy(
-                    sourceArray:      a,        sourceIndex: 0,
+                    sourceArray:      a,        sourceIndex:      0,
                     destinationArray: cursorAm, destinationIndex: 0,
-                    length: m);
+                    length: m + 1);
 
             // 結果要素の追加
             results.Add(new ARBurgResult(pm[m], q, cursorAm));
 
             // bm, b'm の更新
-            for(var i = 1; i < N - m; ++i)
+            for(var i = 1; i < maxCount; ++i)
             {
                 bx[i]  += amm * bdx[i];
                 bdx[i]  = bdx[i + 1] + amm * bx[i + 1];
