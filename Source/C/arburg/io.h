@@ -4,6 +4,7 @@
 #include "model.h"
 #include "io_type.h"
 
+
 extern void model_write(
         const char *path,
         const model_t *p_model);
@@ -11,6 +12,13 @@ extern void model_write(
 extern void model_write_csv(
         const char *path,
         const model_t *p_model);
+
+/**
+ */
+model_t *model_read_csv(
+        const char *path,
+        const char separator,
+        double     dt);
 
 /**
  * 最新のデータディレクトリのシンボリックリンクを作成もしくは更新する.
