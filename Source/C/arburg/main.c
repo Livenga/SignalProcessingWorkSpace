@@ -44,8 +44,18 @@ int main(
     char path[1024];
     memset((void *)path, 0, sizeof(path));
 
-    model_t *p_model = model_create_sample(1.f, 1000);
-    //model_t *p_model = model_create_sin(1.f, 50.f, 512);
+    model_t *p_model = NULL;
+
+    if(argc > 1)
+    {
+        p_model = model_read_csv(*(argv + 1), '\t', .001);
+    }
+
+    if(p_model == NULL)
+    {
+        p_model = model_create_sample(1.f, 1000);
+        //p_model = model_create_sin(1.f, 50.f, 512);
+    }
 
     // 出力先ディレクトリ作成
     create_datetime_directory(path, 1024);
