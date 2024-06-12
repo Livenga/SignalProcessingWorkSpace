@@ -32,7 +32,7 @@ model_t *model_create_sample(
     int cnt = 0;
     for(double dt = 0.f; dt <= sec; dt += step_size)
     {
-#if 1
+#if 0
         double signal  = sin(rad1 * dt) + sin(rad2 * dt) + sin(rad3 * dt);
         //double signal  = sin(100 * dt);
 #else
@@ -158,6 +158,8 @@ arburg_result_t *model_ar_model(
     fprintf(stderr, "x 分散 = %f\n", *P);
 
     double *a      = (double *)calloc(order_count, sizeof(double));
+    *(a + 0) = 1.f;
+
     double *a_prev = (double *)calloc(order_count, sizeof(double));
 
     // b'1i
@@ -171,7 +173,7 @@ arburg_result_t *model_ar_model(
         arburg_result_t *p_ar = p_ret + (m - 1);
         p_ar->Pm      = .0f;
         p_ar->a       = (double *)calloc(m + 1, sizeof(double));
-        p_ar->m_count = m;
+        p_ar->m_count = (m + 1);
 
         int max_count = N - m;
 
@@ -190,7 +192,6 @@ arburg_result_t *model_ar_model(
         *(a + m) = amm;
         *(P + m) = *(P + (m - 1)) * (1.f - amm * amm);
         p_ar->Pm = *(P + m);
-        //*(P + m) *= (1.f - amm * amm);
 
         if(m > 1)
         {
@@ -199,13 +200,12 @@ arburg_result_t *model_ar_model(
                 *(a + i) = *(a_prev + i) + amm * *(a_prev + (m - i));
             }
         }
-
         memcpy(a_prev, a, (m + 1) * sizeof(double));
-        memcpy(p_ar->a, a + 1, m * sizeof(double));
+        memcpy(p_ar->a, a, (m + 1) * sizeof(double));
 
         // Em^2 の計算
         double Em_2 = .0f;
-        for(int k = m + 1; k <= N; ++k)
+        for(int k = m + 1; k < N; ++k)
         {
             double sum_ax = .0f;
             for(int i = 1; i <= m; ++i)

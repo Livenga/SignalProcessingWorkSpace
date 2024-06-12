@@ -74,7 +74,7 @@ int main(
     }
 #endif
 
-    int order_count = 500;
+    int order_count = 256;
     arburg_result_t *p_result = model_ar_model(p_model, order_count);
 
     //
@@ -101,7 +101,7 @@ int main(
     // 上位 16 の結果の出力を行う.
     for(int i = 0; i < 16; ++i)
     {
-        calc_power_spectrum(p_result + i, 200.f, path);
+        calc_power_spectrum(p_result + i, 300, path);
     }
 
     char *p_target_name = get_target_name(path);
@@ -152,10 +152,10 @@ static void calc_power_spectrum(
 
         double sum_sin = .0f,
                sum_cos = 1.f;
-        for(int i = 0; i < p_result->m_count; ++i)
+        for(int i = 1; i < p_result->m_count; ++i)
         {
-            sum_cos += *(p_result->a + i) * cos(omega * (i + 1) * dt);
-            sum_sin += *(p_result->a + i) * sin(omega * (i + 1) * dt);
+            sum_cos += *(p_result->a + i) * cos(omega * i * dt);
+            sum_sin += *(p_result->a + i) * sin(omega * i * dt);
         }
 
         double s;
