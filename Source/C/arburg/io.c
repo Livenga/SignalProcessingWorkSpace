@@ -11,6 +11,32 @@
 #include "io_type.h"
 
 
+/**
+ */
+void arburg_result_dump(const arburg_result_t *p_result)
+{
+    int32_t n = (p_result->m_count - 1);
+    char path[1024];
+    memset((void *)path, 0, sizeof(path));
+    snprintf(path, 1024, "a/m_%06d.csv", n);
+
+    FILE *fp = fopen(path, "wb");
+    if(fp == NULL)
+        return;
+
+    fprintf(fp, "Pm = %.8f\n",   p_result->Pm);
+    fprintf(fp, "Q  = %.8f\n\n", p_result->Q);
+
+    for(int i = 0; i < p_result->m_count; ++i)
+    {
+        double a = *(p_result->a + i);
+        fprintf(fp, "%d\t%.8f\n", i, a);
+    }
+
+    fclose(fp);
+}
+
+
 void model_write(
         const char *path,
         const model_t *p_model)

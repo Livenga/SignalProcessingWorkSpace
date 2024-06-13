@@ -32,7 +32,7 @@ model_t *model_create_sample(
     int cnt = 0;
     for(double dt = 0.f; dt <= sec; dt += step_size)
     {
-#if 0
+#if 1
         double signal  = sin(rad1 * dt) + sin(rad2 * dt) + sin(rad3 * dt);
         //double signal  = sin(100 * dt);
 #else

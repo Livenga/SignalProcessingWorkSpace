@@ -5,6 +5,10 @@
 #include "io_type.h"
 
 
+/**
+ */
+extern void arburg_result_dump(const arburg_result_t *p_result);
+
 extern void model_write(
         const char *path,
         const model_t *p_model);
@@ -15,7 +19,7 @@ extern void model_write_csv(
 
 /**
  */
-model_t *model_read_csv(
+extern model_t *model_read_csv(
         const char *path,
         const char separator,
         double     dt);

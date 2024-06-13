@@ -33,6 +33,10 @@ static char *path_combine(
 static int q_compare(const void *p1, const void *p2);
 static char *get_target_name(const char *path);
 
+extern void db_insert_orders(
+        const arburg_result_t *p_result,
+        int order_count);
+
 /**
  */
 int main(
@@ -77,6 +81,8 @@ int main(
     int order_count = 256;
     arburg_result_t *p_result = model_ar_model(p_model, order_count);
 
+    db_insert_orders(p_result, order_count);
+
     //
     qsort(p_result, order_count - 1, sizeof(arburg_result_t), q_compare);
 
@@ -103,19 +109,17 @@ int main(
     {
         calc_power_spectrum(p_result + i, 300, path);
     }
-
     char *p_target_name = get_target_name(path);
     create_or_update_data_link(p_target_name, "csvs/latest");
 
     free(p_target_name); p_target_name = NULL;
 
 
-#if 0
-    for(int i = 0; i < (order_count - 1); ++i)
+    for(int i = 0; i < order_count - 1; ++i)
     {
-        calc_power_spectrum(p_result + i, 100.f, path);
+        arburg_result_dump((p_result + i));
     }
-#endif
+
     free(p_result);
 
     return 0;
