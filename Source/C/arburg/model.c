@@ -21,20 +21,20 @@ model_t *model_create_sample(
     p->items = (model_item_t *)calloc(p->size, sizeof(model_item_t));
 
     double step_size = sec / p->size;
-    double rad1 = 2. * M_PI * 28.f,
-           rad2 = 2. * M_PI * 31.5f,
-           rad3 = 2. * M_PI * 32.5f;
+    double rad1 = 2. * M_PI * 28.,
+           rad2 = 2. * M_PI * 31.5,
+           rad3 = 2. * M_PI * 32.5;
 
     if(contains_noise)
         srand(time(NULL));
 
     int cnt = 0;
-    for(double dt = 0.f; dt <= sec; dt += step_size)
+    for(double dt = 0.; dt <= sec; dt += step_size)
     {
         double signal  = sin(rad1 * dt) + sin(rad2 * dt) + sin(rad3 * dt);
         if(contains_noise)
         {
-            double noise = ((double)rand() / RAND_MAX) * 2.f - 1.f;
+            double noise = ((double)rand() / RAND_MAX) * 2. - 1.;
             signal += noise;
         }
 

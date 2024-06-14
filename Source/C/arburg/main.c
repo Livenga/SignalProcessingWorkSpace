@@ -83,6 +83,8 @@ int main(
     {
         power_spectrum_t *p_ps = power_spectrum_calc(p_result + i, 300, .1f, .001f);
 
+        fprintf(stderr, "[%ld]\tQm = %f\n", (p_result + i)->m_count, (p_result + i)->Q);
+
         // CSV ファイル名の割り当て
         char ps_filename[256];
         memset((void *)ps_filename, 0, sizeof(ps_filename));
