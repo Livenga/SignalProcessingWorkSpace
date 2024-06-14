@@ -2,37 +2,16 @@
 #define _MODEL_H
 
 #include <stdint.h>
-
-
-typedef struct _model_item_t
-{
-    double time;
-    double value;
-} model_item_t;
-
-typedef struct _model_t
-{
-    size_t size;
-    model_item_t *items;
-    //double *values;
-} model_t;
-
-
-typedef struct _arburg_result_t
-{
-    double Pm;
-    double Q;
-    double *a;
-    size_t m_count;
-} arburg_result_t;
+#include "model_type.h"
 
 
 /**
  * サンプルモデルの作成
  */
 extern model_t *model_create_sample(
-        double sec,
-        int32_t size);
+        double  sec,
+        int32_t size,
+        int8_t  contains_noise);
 
 /**
  */
@@ -59,4 +38,25 @@ extern arburg_result_t *model_ar_model(
  */
 extern void arburg_result_free(arburg_result_t *p);
 
+
+/**
+ */
+extern power_spectrum_t *power_spectrum_calc(
+        const arburg_result_t *p_result,
+        double max_freq,
+        double step_size,
+        double dt);
+
+
+/**
+ */
+extern int8_t power_spectrum_to_csv(
+        const power_spectrum_t *p_self,
+        const char *path,
+        const int8_t has_header);
+
+
+/**
+ */
+extern void power_spectrum_free(power_spectrum_t *p);
 #endif

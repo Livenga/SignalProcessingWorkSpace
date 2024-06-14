@@ -3,6 +3,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <stdint.h>
+#include <time.h>
 #include <math.h>
 
 #include "model.h"
@@ -11,35 +12,31 @@
 /**
  */
 model_t *model_create_sample(
-        double sec,
-        int32_t size)
+        double  sec,
+        int32_t size,
+        int8_t  contains_noise)
 {
     model_t *p = (model_t *)calloc(1, sizeof(model_t));
     p->size   = size;
     p->items = (model_item_t *)calloc(p->size, sizeof(model_item_t));
 
     double step_size = sec / p->size;
-#if 0
     double rad1 = 2. * M_PI * 28.f,
            rad2 = 2. * M_PI * 31.5f,
            rad3 = 2. * M_PI * 32.5f;
-#else
-    double rad1 = 2. * M_PI * 32.f,
-           rad2 = 2. * M_PI * 64.f,
-           rad3 = 2. * M_PI * 128.f;
-#endif
+
+    if(contains_noise)
+        srand(time(NULL));
 
     int cnt = 0;
     for(double dt = 0.f; dt <= sec; dt += step_size)
     {
-#if 1
         double signal  = sin(rad1 * dt) + sin(rad2 * dt) + sin(rad3 * dt);
-        //double signal  = sin(100 * dt);
-#else
-        double noise = ((double)rand() / RAND_MAX) * 2.f - 1.f;
-        //double signal  = sin(rad1 * dt) + sin(rad2 * dt) + sin(rad3 * dt) + noise;
-        double signal  = noise;
-#endif
+        if(contains_noise)
+        {
+            double noise = ((double)rand() / RAND_MAX) * 2.f - 1.f;
+            signal += noise;
+        }
 
         model_item_t *p_item = (p->items + cnt);
 

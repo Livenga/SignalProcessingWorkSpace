@@ -10,13 +10,6 @@
 #include "model.h"
 
 
-/**
- */
-static void calc_power_spectrum(
-        const arburg_result_t *p_result,
-        double max_freq,
-        char *destination_path);
-
 static char *create_datetime_directory(
         char   *path,
         size_t n);
@@ -57,7 +50,7 @@ int main(
 
     if(p_model == NULL)
     {
-        p_model = model_create_sample(1.f, 1000);
+        p_model = model_create_sample(1.f, 1000, 0);
         //p_model = model_create_sin(1.f, 50.f, 512);
     }
 
@@ -80,35 +73,33 @@ int main(
 
     int order_count = 256;
     arburg_result_t *p_result = model_ar_model(p_model, order_count);
+    //db_insert_orders(p_result, order_count);
 
-    db_insert_orders(p_result, order_count);
-
-    //
     qsort(p_result, order_count - 1, sizeof(arburg_result_t), q_compare);
 
-#if 0
-    double min_q = p_result->Q;
-    int min_index = 0;
-    for(int i = 1; i < (order_count - 1); ++i)
-    {
-        double q = (p_result + i)->Q;
-        fprintf(stderr, "\t[%4d]\t%f\n", i, q);
 
-        if(min_q > q)
-        {
-            min_q     = q;
-            min_index = i;
-        }
-    }
-    arburg_result_t *p_a = (p_result + min_index);
-    fprintf(stderr, "最小Q[%d] = %f\n", min_index, p_a->Q);
-#endif
-
-    // 上位 16 の結果の出力を行う.
+    // 上位 16 の結果のパワースペクトラムの出力.
     for(int i = 0; i < 16; ++i)
     {
-        calc_power_spectrum(p_result + i, 300, path);
+        power_spectrum_t *p_ps = power_spectrum_calc(p_result + i, 300, .1f, .001f);
+
+        // CSV ファイル名の割り当て
+        char ps_filename[256];
+        memset((void *)ps_filename, 0, sizeof(ps_filename));
+        snprintf(ps_filename, 256, "%03d_m%06ld.csv", i, (p_result + i)->m_count);
+
+        char *p_csv = path_combine(path, ps_filename);
+
+        // csv ファイルへの出力
+        power_spectrum_to_csv(p_ps, p_csv, 1);
+
+        // 各種解放
+        free(p_csv);
+        power_spectrum_free(p_ps);
     }
+
+
+    // 最新のデータディレクトリのシンボリックリンクを作成
     char *p_target_name = get_target_name(path);
     create_or_update_data_link(p_target_name, "csvs/latest");
 
@@ -123,57 +114,6 @@ int main(
     free(p_result);
 
     return 0;
-}
-
-
-/**
- */
-static void calc_power_spectrum(
-        const arburg_result_t *p_result,
-        double max_freq,
-        char *destination_path)
-{
-    FILE *fp = NULL;
-    char path[2048];
-
-    memset((void *)path, 0, sizeof(path));
-    snprintf(path, 2048, "%s/%06ld.csv",
-            destination_path,
-            p_result->m_count);
-
-    fp = fopen(path, "w");
-    if(fp == NULL)
-    {
-        eprintf(stderr, "", "fopen(3)");
-        return;
-    }
-
-
-    double dt = .001f;
-    for(double f = .0f; f < max_freq; f += .1f)
-    {
-        double omega = 2. * M_PI * f;
-
-        double sum_sin = .0f,
-               sum_cos = 1.f;
-        for(int i = 1; i < p_result->m_count; ++i)
-        {
-            sum_cos += *(p_result->a + i) * cos(omega * i * dt);
-            sum_sin += *(p_result->a + i) * sin(omega * i * dt);
-        }
-
-        double s;
-#if 1
-        s = (p_result->Pm * dt) / (sum_cos * sum_cos + sum_sin * sum_sin);
-#else
-        s = 1.f / (sum_cos * sum_cos + sum_sin * sum_sin);
-        s = 10.f * log10(s);
-#endif
-        //fprintf(stdout, "%f\t%f\n", f, s);
-        fprintf(fp, "%f\t%f\n", (double)f, s);
-    }
-
-    fclose(fp);
 }
 
 
