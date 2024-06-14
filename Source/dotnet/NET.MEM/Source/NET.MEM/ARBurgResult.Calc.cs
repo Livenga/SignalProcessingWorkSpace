@@ -6,7 +6,6 @@ using System.Diagnostics;
 using System.Linq;
 
 
-
 /// <summary></summary>
 partial class ARBurgResult
 {

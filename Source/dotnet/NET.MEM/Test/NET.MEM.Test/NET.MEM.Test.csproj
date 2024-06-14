@@ -25,4 +25,10 @@
     <ProjectReference Include="..\..\Source\NET.MEM\NET.MEM.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="coefficient_m5.csv">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
