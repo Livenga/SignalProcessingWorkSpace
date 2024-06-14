@@ -78,16 +78,17 @@ int8_t power_spectrum_to_csv(
 
     if(has_header == 1)
     {
-        line_length = snprintf(buffer, 1024, "f\tpower\n");
+        line_length = snprintf(buffer, 1024, "f\tpower\tdB\n");
         fwrite(buffer, sizeof(char), line_length, fp);
     }
 
     for(int i = 0; i < p_self->item_count; ++i)
     {
         power_spectrum_item_t *p_item = (p_self->items + i);
-        line_length = snprintf(buffer, 1024, "%f\t%f\n",
+        line_length = snprintf(buffer, 1024, "%f\t%f\t%f\n",
                 p_item->f,
-                p_item->s);
+                p_item->s,
+                10.f * log10(p_item->s));
 
         fwrite(buffer, sizeof(char), line_length, fp);
     }
