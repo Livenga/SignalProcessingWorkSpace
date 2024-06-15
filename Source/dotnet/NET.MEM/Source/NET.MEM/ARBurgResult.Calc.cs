@@ -39,48 +39,47 @@ partial class ARBurgResult
     /// <summary></summary>
     public static IEnumerable<ARBurgResult> Calc(
             double[] x,
-            int orderCount)
+            int      orderCount)
     {
         List<ARBurgResult> results = new ();
 
         int N = x.Length;
 
-        var bx  = new double[N];
-        var bdx = new double[N];
+        var bx  = new double[N + 1];
+        var bdx = new double[N + 1];
 
-        var pm  = new double[orderCount];
+        var pm  = new double[orderCount + 1];
 
-        var a = new double[orderCount];
-        var prevA = new double[orderCount];
+        var a = new double[orderCount + 1];
+        var prevA = new double[orderCount + 1];
 
         var aveX = x.Average();
         double sumX = .0f;
-        for(var i = 0; i < N; ++i)
+        for(var i = 1; i <= N; ++i)
         {
-            double adjX = x[i] - aveX;
+            double adjX = x[i - 1] - aveX;
 
-            bx[i] = adjX;
-            //bx[i] = x[i];
+            //bx[i] = adjX;
+            bx[i] = x[i - 1];
             sumX += adjX * adjX;
         }
+        a[0]  = 1f;
         pm[0] = sumX / (double)N;
 #if DEBUG
         Debug.WriteLine($"[Debug] X 分散: {pm[0]}");
 #endif
 
-        a[0]     = 1f;
-
         Array.Copy(
-                sourceArray:      bx,  sourceIndex:      1,
-                destinationArray: bdx, destinationIndex: 0,
+                sourceArray:      bx,  sourceIndex:      2,
+                destinationArray: bdx, destinationIndex: 1,
                 length: N - 1);
 
-        for(var m = 1; m < orderCount; ++m)
+        for(var m = 1; m <= orderCount; ++m)
         {
             var maxCount = N - m;
 
             double nume = .0f, deno = .0f;
-            for(var i = 1; i < maxCount; ++i)
+            for(var i = 1; i <= maxCount; ++i)
             {
                 var bmi  = bx[i];
                 var bdmi = bdx[i];
@@ -108,18 +107,18 @@ partial class ARBurgResult
                     length:           m + 1);
 
             double Em2 = .0f;
-            for(var k = m + 1; k < N; ++k)
+            for(var k = m + 1; k <= N; ++k)
             {
                 double sumAx = .0f;
                 for(var i = 1; i <= m; ++i)
                 {
-                    sumAx += a[i] * x[k - i];
+                    sumAx += a[i] * x[k - i - 1];
                 }
 
-                Em2 += Math.Pow(x[k] - sumAx, 2f);
+                Em2 += Math.Pow(x[k - 1] - sumAx, 2f);
             }
 
-            var q = Em2 * ((double)(N + m + 1f) / (double)(N - (m + 1f)));
+            var q = Em2 * ((double)(N + m + 1d) / (double)(N - (m + 1f)));
             var cursorAm = new double[m + 1];
             Array.Copy(
                     sourceArray:      a,        sourceIndex:      0,
@@ -130,7 +129,7 @@ partial class ARBurgResult
             results.Add(new ARBurgResult(pm[m], q, cursorAm));
 
             // bm, b'm の更新
-            for(var i = 1; i < maxCount; ++i)
+            for(var i = 1; i <= maxCount; ++i)
             {
                 bx[i]  += amm * bdx[i];
                 bdx[i]  = bdx[i + 1] + amm * bx[i + 1];
