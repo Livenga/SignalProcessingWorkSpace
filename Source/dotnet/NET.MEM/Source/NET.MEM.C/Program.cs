@@ -13,17 +13,31 @@ static class Program
     static async Task Main(string[] args)
     {
         var signal = Enumerable.Range(0, 1000)
-            .Select(dt => Math.Sin(2d * Math.PI *  28d   * ((double)dt / 1000d))
-                    +     Math.Sin(2d * Math.PI *  31.5d * ((double)dt / 1000d))
-                    +     Math.Sin(2d * Math.PI *  32.5d * ((double)dt / 1000d)))
+            .Select(dt => Math.Sin(2d * Math.PI *  50d   * ((double)dt / 1000d))
+                    +     Math.Sin(2d * Math.PI *  100d * ((double)dt / 1000d))
+                    +     Math.Sin(2d * Math.PI *  62d * ((double)dt / 1000d))
+                    +     Math.Sin(2d * Math.PI *  250d * ((double)dt / 1000d)))
             .ToArray();
 
         var results = ARBurgResult.Calc(signal, 256);
 
         var directoryName = DateTime.Now.ToString("yyyyyMMdd_hhmmss");
         var csvPath = TryCreateDirectory(Path.Combine("csvs", directoryName));
+
+#if DEBUG
+        var signalPath = Path.Combine(csvPath, "signal.csv");
+        using(var signalStream = File.Open(signalPath, File.Exists(signalPath) ? FileMode.Truncate : FileMode.CreateNew, FileAccess.Write))
+        {
+            for(var i = 0; i < 1000; ++i)
+            {
+                var signalBuf = Encoding.UTF8.GetBytes($"{(double)i/1000d}\t{signal[i]}\n");
+                await signalStream.WriteAsync(signalBuf, 0, signalBuf.Length, CancellationToken.None);
+            }
+            await signalStream.FlushAsync(CancellationToken.None);
+        }
+#endif
         var symLinkPath = Path.Combine("csvs", "latest");
-        if(File.Exists(symLinkPath))
+        if(Directory.Exists(symLinkPath))
             File.Delete(symLinkPath);
         File.CreateSymbolicLink(
                 path: symLinkPath,
@@ -32,12 +46,33 @@ static class Program
         int index = 1;
         foreach(var r in results
                 .OrderBy(r => r.Q)
-                .Take(32))
+                .Take(16))
         {
             var csvDataPath = Path.Combine(csvPath, $"{index:D3}_m{r.A.Length:D6}.csv");
+
+            Console.Error.WriteLine($"[{r.A.Length}]\tQm = {r.Q}");
+
             var o = r.PowerSpectrum(250f, .001);
 
             await PowerSpectrumDensityToCsvAsync(csvDataPath, Encoding.UTF8, o, CancellationToken.None);
+
+            var aPath = Path.Combine("a", $"{r.A.Length:D6}.txt");
+            using(var stream = File.Open(aPath, File.Exists(aPath) ? FileMode.Truncate : FileMode.Create, FileAccess.Write))
+            {
+                string s = $"Pm = {r.Pm}\nQ = {r.Q}\n\n";
+                var buffer = Encoding.UTF8.GetBytes(s);
+                await stream.WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
+
+                int _index = 1;
+                foreach(var a in r.A)
+                {
+                    buffer = Encoding.UTF8.GetBytes($"{_index}\t{a}\n");
+                    await stream.WriteAsync(buffer, 0, buffer.Length, CancellationToken.None);
+                    ++_index;
+                }
+
+            }
+
             ++index;
         }
 

@@ -66,7 +66,7 @@ partial class ARBurgResult
         a[0]  = 1f;
         pm[0] = sumX / (double)N;
 #if DEBUG
-        Debug.WriteLine($"[Debug] X 分散: {pm[0]}");
+        Console.Error.WriteLine($"[Debug] X 分散: {pm[0]}");
 #endif
 
         Array.Copy(
