@@ -26,6 +26,8 @@ static char *path_combine(
 static int q_compare(const void *p1, const void *p2);
 static char *get_target_name(const char *path);
 
+static void create_gnuplot_script(power_spectrum_t **p_psds, size_t size, const char *root_path);
+
 extern void db_insert_orders(
         const arburg_result_t *p_result,
         int order_count);
@@ -78,10 +80,13 @@ int main(
     qsort(p_result, order_count - 1, sizeof(arburg_result_t), q_compare);
 
 
+    size_t psd_size = 16;
+    power_spectrum_t **p_psds = (power_spectrum_t **)calloc(psd_size, sizeof(power_spectrum_t *));
     // 上位 16 の結果のパワースペクトラムの出力.
-    for(int i = 0; i < 16; ++i)
+    for(int i = 0; i < psd_size; ++i)
     {
         power_spectrum_t *p_ps = power_spectrum_calc(p_result + i, 300, .1f, .001f);
+        *(p_psds + i) = p_ps;
 
         fprintf(stderr, "[%ld]\tQm = %f\n", (p_result + i)->m_count, (p_result + i)->Q);
 
@@ -97,8 +102,19 @@ int main(
 
         // 各種解放
         free(p_csv);
-        power_spectrum_free(p_ps);
+        //power_spectrum_free(p_ps);
     }
+
+    // gnuplot スクリプトファイルの作成
+    create_gnuplot_script(p_psds, psd_size, path);
+
+    // PSD 解放
+    for(int i = 0; i < psd_size; ++i)
+    {
+        power_spectrum_free(*(p_psds + i));
+        *(p_psds + i) = NULL;
+    }
+    free(p_psds); p_psds = NULL;
 
 
     // 最新のデータディレクトリのシンボリックリンクを作成
@@ -232,4 +248,58 @@ static char *get_target_name(const char *path)
     free(tmp); tmp = NULL;
 
     return p_ret;
+}
+
+
+/**
+ */
+static void create_gnuplot_script(
+        power_spectrum_t **p_psds,
+        size_t size,
+        const char *root_path)
+{
+    FILE *fp = NULL;
+
+    char script_name[256];
+    memset(script_name, 0, sizeof(script_name));
+    snprintf(script_name, 256, "4x4_multiplot.p");
+
+    char *script_path = path_combine((char *)root_path, script_name);
+#if 1
+    fprintf(stderr, "gunplot script filepath = %s\n", script_path);
+#endif
+
+    fp = fopen(script_path, "wb");
+    free(script_path); script_path = NULL;
+    if(fp == NULL)
+        return;
+
+    fprintf(fp, "# %s\n\n", script_name);
+    fprintf(fp, "set grid xtics mxtics linewidth 1, linewidth .8\n");
+    fprintf(fp, "set grid ytics mytics linewidth 1, linewidth .8\n\n");
+    fprintf(fp, "set terminal png\n");
+    fprintf(fp, "set terminal pngcairo size 4096, 4096 font \", 8\"\n");
+    fprintf(fp, "set output \"4_4.png\"\n");
+    fprintf(fp, "set multiplot layout 4,4\n\n");
+    for(int col = 2; col < 4; ++col)
+    {
+        for(int i = 0; i < size; ++i)
+        {
+            power_spectrum_t *p_psd = *(p_psds + i);
+
+            if(col == 2)
+                fprintf(fp, "# ");
+
+            fprintf(fp, "plot \"%03d_m%06ld.csv\" every::1 using 1:%d title \"am[%ld]\" with lines\n",
+                    i,
+                    p_psd->am_count,
+                    col,
+                    p_psd->am_count);
+        }
+
+        if(col != 3)
+            fprintf(fp, "\n");
+    }
+
+    fclose(fp);
 }
