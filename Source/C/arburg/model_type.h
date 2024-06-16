@@ -36,7 +36,13 @@ typedef struct _power_spectrum_item_t
 
 typedef struct _power_spectrum_t
 {
+    // 次数の個数
+    size_t am_count;
+
+    // 要素数
     size_t item_count;
+
+    // 要素
     power_spectrum_item_t *items;
 } power_spectrum_t;
 

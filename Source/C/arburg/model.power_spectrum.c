@@ -22,10 +22,11 @@ power_spectrum_t *power_spectrum_calc(
     power_spectrum_t *p_ret = (power_spectrum_t *)calloc(1, sizeof(power_spectrum_t));
     power_spectrum_item_t *p_items = (power_spectrum_item_t *)calloc(size, sizeof(power_spectrum_item_t));
 
+    p_ret->am_count = p_result->m_count;
     p_ret->item_count = size;
     p_ret->items = p_items;
 
-    for(double f = .0f; f <= max_freq; f += step_size)
+    for(double f = .0; f <= max_freq; f += step_size)
     {
         double omega = 2. * M_PI * f;
 

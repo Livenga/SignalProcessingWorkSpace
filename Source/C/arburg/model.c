@@ -138,44 +138,45 @@ arburg_result_t *model_ar_model(
     double pm = sum_x / N;
 #endif
 
-    double *bx  = (double *)calloc(N, sizeof(double));
-    double *bdx = (double *)calloc(N, sizeof(double));
+    double *bx  = (double *)calloc(N + 1, sizeof(double));
+    double *bdx = (double *)calloc(N + 1, sizeof(double));
 
-    double *P = (double *)calloc(order_count, sizeof(double));
+    double *P = (double *)calloc(order_count + 1, sizeof(double));
 
     // Pm0 は x のモデルの分散
     sum_x = .0f;
     for(int i = 0; i < N; ++i)
     {
         double xx_ = *(x + i) - ave_x;
-        *(bx + i) = xx_;
+        *(bx + i + 1) = xx_;
+        //*(bx + (i + 1)) = *(x + i);
         sum_x += xx_ * xx_;
     }
+    // b'1i
+    memcpy(bdx + 1, bx + 2, (N - 1) * sizeof(double));
+
     *(P + 0) = sum_x / (double)N;
     fprintf(stderr, "x 分散 = %f\n", *P);
 
-    double *a      = (double *)calloc(order_count, sizeof(double));
+    double *a      = (double *)calloc(order_count + 1, sizeof(double));
     *(a + 0) = 1.f;
 
-    double *a_prev = (double *)calloc(order_count, sizeof(double));
-
-    // b'1i
-    memcpy(bdx, bx + 1, (N - 1) * sizeof(double));
+    double *a_prev = (double *)calloc(order_count + 1, sizeof(double));
 
 
-    arburg_result_t *p_ret = (arburg_result_t *)calloc(order_count - 1, sizeof(arburg_result_t));
+    arburg_result_t *p_ret = (arburg_result_t *)calloc(order_count, sizeof(arburg_result_t));
 
-    for(int m = 1; m < order_count; ++m)
+    for(int m = 1; m <= order_count; ++m)
     {
         arburg_result_t *p_ar = p_ret + (m - 1);
-        p_ar->Pm      = .0f;
+        p_ar->Pm      = .0;
         p_ar->a       = (double *)calloc(m + 1, sizeof(double));
         p_ar->m_count = (m + 1);
 
         int max_count = N - m;
 
-        double sum_n = .0f, sum_m = .0f;
-        for(int i = 1; i < max_count; ++i)
+        double sum_n = .0, sum_m = .0;
+        for(int i = 1; i <= max_count; ++i)
         {
             double bmi  = *(bx  + i),
                    bdmi = *(bdx + i);
@@ -184,17 +185,17 @@ arburg_result_t *model_ar_model(
             sum_m += (bmi * bmi) + (bdmi * bdmi);
         }
 
-        double amm = (-2.f * sum_n) / sum_m;
+        double amm = (-2. * sum_n) / sum_m;
 
         *(a + m) = amm;
-        *(P + m) = *(P + (m - 1)) * (1.f - amm * amm);
+        *(P + m) = *(P + (m - 1)) * (1. - amm * amm);
         p_ar->Pm = *(P + m);
 
         if(m > 1)
         {
             for(int i = 1; i < m; ++i)
             {
-                *(a + i) = *(a_prev + i) + amm * *(a_prev + (m - i));
+                *(a + i) = *(a_prev + i) + amm * *(a_prev + m - i);
             }
         }
         memcpy(a_prev, a, (m + 1) * sizeof(double));
@@ -202,22 +203,30 @@ arburg_result_t *model_ar_model(
 
         // Em^2 の計算
         double Em_2 = .0f;
-        for(int k = m + 1; k < N; ++k)
+        for(int k = m + 1; k <= N; ++k)
         {
             double sum_ax = .0f;
             for(int i = 1; i <= m; ++i)
             {
-                sum_ax += *(a + i) + *(x + (k - i));
+                sum_ax += *(a + i) + *(x + k - i - 1);
             }
 
-            Em_2 += pow(*(x + k) - sum_ax, 2.f);
+            Em_2 += pow(*(x + (k - 1)) - sum_ax, 2.);
         }
 
+#if 1
+        fprintf(stderr, "[%d]\tEm2 = %f\n", m, Em_2);
+#endif
+
+#if 0
         p_ar->Q = Em_2 * ((1.f + ((double)m + 1.f ) / N)
                 / ((1.f - ((double)m + 1.f) / N)));
+#else
+        p_ar->Q = Em_2 * (((double)N + m + 1.) / ((double)N - (m + 1.)));
+#endif
 
         // bmi, dbmi 更新
-        for(int i = 1; i < N - m; ++i)
+        for(int i = 1; i <= max_count; ++i)
         {
             *(bx  + i) += amm * *(bdx + i);
             *(bdx + i) = *(bdx + (i + 1)) + amm * *(bx + (i + 1));
