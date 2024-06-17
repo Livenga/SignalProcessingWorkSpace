@@ -37,7 +37,12 @@ partial class ARBurgResult
                 sumSin += A[i] * Math.Sin(omega * i * dt);
             }
 
-            var s = (Pm * dt) / (sumCos * sumCos + sumSin * sumSin);
+            double s;
+            if(Pm == 0d)
+                s = (.0001d * dt) / (sumCos * sumCos + sumSin * sumSin);
+            else
+                s = (Pm * dt) / (sumCos * sumCos + sumSin * sumSin);
+
             ret.Add((f, s));
         }
 
@@ -75,9 +80,6 @@ partial class ARBurgResult
         }
         a[0]  = 1f;
         pm[0] = sumX / (double)N;
-#if DEBUG
-        Console.Error.WriteLine($"[Debug] X 分散: {pm[0]}");
-#endif
 
         Array.Copy(
                 sourceArray:      bx,  sourceIndex:      2,

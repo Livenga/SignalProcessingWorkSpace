@@ -233,7 +233,7 @@ partial class MainForm
 
             var minFreq = Convert.ToDouble(psdMinFrequensyText.Text);
             var maxFreq = Convert.ToDouble(psdMaxFrequencyText.Text);
-            var values = await Task.Run(() => result.PowerSpectrum(
+            var values  = await Task.Run(() => result.PowerSpectrum(
                         fmin: minFreq,
                         fmax: maxFreq,
                         dt:   1d / (double)samplingRate));
