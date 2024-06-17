@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NET.MEM.Test", "Test\NET.ME
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "NET.MEM.C", "Source\NET.MEM.C\NET.MEM.C.csproj", "{CF9EFFD4-9009-4945-B4B8-FAF820243BAB}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NET.MEM.EvalFrom", "Source\NET.MEM.EvalFrom\NET.MEM.EvalFrom.csproj", "{82D8299E-15AE-4297-B2B8-3636F6663351}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "NET.MEM.EvalForm", "Source\NET.MEM.EvalForm\NET.MEM.EvalForm.csproj", "{82D8299E-15AE-4297-B2B8-3636F6663351}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
