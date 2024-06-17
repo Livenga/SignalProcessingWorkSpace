@@ -14,9 +14,19 @@ partial class ARBurgResult
             double fmax,
             double dt)
     {
+        return PowerSpectrum(0d, fmax, dt);
+    }
+
+
+    /// <summary></summary>
+    public (double, double)[] PowerSpectrum(
+            double fmin,
+            double fmax,
+            double dt)
+    {
         var ret = new List<(double, double)>();
 
-        for(double f = .0f; f <= fmax; f += .1f)
+        for(double f = fmin; f <= fmax; f += .1f)
         {
             var omega = 2f * Math.PI * f;
 
